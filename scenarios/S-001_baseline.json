@@ -1,0 +1,711 @@
+{
+  "scenario_id": "S-001",
+  "scenario_name": "Baseline Simulation",
+  "description": "Deterministic baseline simulation test with 50 synthetic virtual targets.",
+  "seed": 42,
+  "timestep_seconds": 0.05,
+  "duration_seconds": 10.0,
+  "target_count": 50,
+  "targets": [
+    {
+      "target_id": "VT-001",
+      "timestamp": 0.0,
+      "position": {
+        "x": 6000.0,
+        "y": 0.0,
+        "z": 1200.0
+      },
+      "velocity": {
+        "vx": -170.0,
+        "vy": -0.0,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-002",
+      "timestamp": 0.0,
+      "position": {
+        "x": 6944.803,
+        "y": 877.333,
+        "z": 1400.0
+      },
+      "velocity": {
+        "vx": -188.502,
+        "vy": -23.813,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-003",
+      "timestamp": 0.0,
+      "position": {
+        "x": 7748.665,
+        "y": 1989.519,
+        "z": 1600.0
+      },
+      "velocity": {
+        "vx": -203.402,
+        "vy": -52.225,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-004",
+      "timestamp": 0.0,
+      "position": {
+        "x": 8367.988,
+        "y": 3313.121,
+        "z": 1800.0
+      },
+      "velocity": {
+        "vx": -213.849,
+        "vy": -84.669,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-005",
+      "timestamp": 0.0,
+      "position": {
+        "x": 4381.533,
+        "y": 2408.768,
+        "z": 2000.0
+      },
+      "velocity": {
+        "vx": -219.077,
+        "vy": -120.438,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-006",
+      "timestamp": 0.0,
+      "position": {
+        "x": 4854.102,
+        "y": 3526.712,
+        "z": 2200.0
+      },
+      "velocity": {
+        "vx": -218.435,
+        "vy": -158.702,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-007",
+      "timestamp": 0.0,
+      "position": {
+        "x": 5102.78,
+        "y": 4791.83,
+        "z": 2400.0
+      },
+      "velocity": {
+        "vx": -109.345,
+        "vy": -102.682,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-008",
+      "timestamp": 0.0,
+      "position": {
+        "x": 5099.392,
+        "y": 6164.106,
+        "z": 2600.0
+      },
+      "velocity": {
+        "vx": -108.362,
+        "vy": -130.987,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-009",
+      "timestamp": 0.0,
+      "position": {
+        "x": 4822.441,
+        "y": 7598.951,
+        "z": 2800.0
+      },
+      "velocity": {
+        "vx": -101.807,
+        "vy": -160.422,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-010",
+      "timestamp": 0.0,
+      "position": {
+        "x": 2128.896,
+        "y": 4524.135,
+        "z": 1000.0
+      },
+      "velocity": {
+        "vx": -89.414,
+        "vy": -190.014,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-011",
+      "timestamp": 0.0,
+      "position": {
+        "x": 1854.102,
+        "y": 5706.339,
+        "z": 1200.0
+      },
+      "velocity": {
+        "vx": -71.074,
+        "vy": -218.743,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-012",
+      "timestamp": 0.0,
+      "position": {
+        "x": 1311.669,
+        "y": 6876.011,
+        "z": 1400.0
+      },
+      "velocity": {
+        "vx": -46.845,
+        "vy": -245.572,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-013",
+      "timestamp": 0.0,
+      "position": {
+        "x": 502.324,
+        "y": 7984.214,
+        "z": 1600.0
+      },
+      "velocity": {
+        "vx": -16.953,
+        "vy": -269.467,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-014",
+      "timestamp": 0.0,
+      "position": {
+        "x": -565.115,
+        "y": 8982.241,
+        "z": 1800.0
+      },
+      "velocity": {
+        "vx": 9.419,
+        "vy": -149.704,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-015",
+      "timestamp": 0.0,
+      "position": {
+        "x": -936.907,
+        "y": 4911.436,
+        "z": 2000.0
+      },
+      "velocity": {
+        "vx": 31.855,
+        "vy": -166.989,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-016",
+      "timestamp": 0.0,
+      "position": {
+        "x": -1854.102,
+        "y": 5706.339,
+        "z": 2200.0
+      },
+      "velocity": {
+        "vx": 58.713,
+        "vy": -180.701,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-017",
+      "timestamp": 0.0,
+      "position": {
+        "x": -2980.455,
+        "y": 6333.789,
+        "z": 2400.0
+      },
+      "velocity": {
+        "vx": 89.414,
+        "vy": -190.014,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-018",
+      "timestamp": 0.0,
+      "position": {
+        "x": -4286.614,
+        "y": 6754.623,
+        "z": 2600.0
+      },
+      "velocity": {
+        "vx": 123.24,
+        "vy": -194.195,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-019",
+      "timestamp": 0.0,
+      "position": {
+        "x": -5736.816,
+        "y": 6934.619,
+        "z": 2800.0
+      },
+      "velocity": {
+        "vx": 159.356,
+        "vy": -192.628,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-020",
+      "timestamp": 0.0,
+      "position": {
+        "x": -3644.843,
+        "y": 3422.736,
+        "z": 1000.0
+      },
+      "velocity": {
+        "vx": 196.822,
+        "vy": -184.828,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-021",
+      "timestamp": 0.0,
+      "position": {
+        "x": -4854.102,
+        "y": 3526.712,
+        "z": 1200.0
+      },
+      "velocity": {
+        "vx": 121.353,
+        "vy": -88.168,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-022",
+      "timestamp": 0.0,
+      "position": {
+        "x": -6134.147,
+        "y": 3372.276,
+        "z": 1400.0
+      },
+      "velocity": {
+        "vx": 148.972,
+        "vy": -81.898,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-023",
+      "timestamp": 0.0,
+      "position": {
+        "x": -7438.212,
+        "y": 2944.996,
+        "z": 1600.0
+      },
+      "velocity": {
+        "vx": 176.658,
+        "vy": -69.944,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-024",
+      "timestamp": 0.0,
+      "position": {
+        "x": -8717.248,
+        "y": 2238.209,
+        "z": 1800.0
+      },
+      "velocity": {
+        "vx": 203.402,
+        "vy": -52.225,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-025",
+      "timestamp": 0.0,
+      "position": {
+        "x": -4960.574,
+        "y": 626.666,
+        "z": 2000.0
+      },
+      "velocity": {
+        "vx": 228.186,
+        "vy": -28.827,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-026",
+      "timestamp": 0.0,
+      "position": {
+        "x": -6000.0,
+        "y": 0.0,
+        "z": 2200.0
+      },
+      "velocity": {
+        "vx": 250.0,
+        "vy": -0.0,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-027",
+      "timestamp": 0.0,
+      "position": {
+        "x": -6944.803,
+        "y": -877.333,
+        "z": 2400.0
+      },
+      "velocity": {
+        "vx": 267.871,
+        "vy": 33.84,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-028",
+      "timestamp": 0.0,
+      "position": {
+        "x": -7748.665,
+        "y": -1989.519,
+        "z": 2600.0
+      },
+      "velocity": {
+        "vx": 145.287,
+        "vy": 37.303,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-029",
+      "timestamp": 0.0,
+      "position": {
+        "x": -8367.988,
+        "y": -3313.121,
+        "z": 2800.0
+      },
+      "velocity": {
+        "vx": 158.062,
+        "vy": 62.581,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-030",
+      "timestamp": 0.0,
+      "position": {
+        "x": -4381.533,
+        "y": -2408.768,
+        "z": 1000.0
+      },
+      "velocity": {
+        "vx": 166.498,
+        "vy": 91.533,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-031",
+      "timestamp": 0.0,
+      "position": {
+        "x": -4854.102,
+        "y": -3526.712,
+        "z": 1200.0
+      },
+      "velocity": {
+        "vx": 169.894,
+        "vy": 123.435,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-032",
+      "timestamp": 0.0,
+      "position": {
+        "x": -5102.78,
+        "y": -4791.83,
+        "z": 1400.0
+      },
+      "velocity": {
+        "vx": 167.663,
+        "vy": 157.446,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-033",
+      "timestamp": 0.0,
+      "position": {
+        "x": -5099.392,
+        "y": -6164.106,
+        "z": 1600.0
+      },
+      "velocity": {
+        "vx": 159.356,
+        "vy": 192.628,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-034",
+      "timestamp": 0.0,
+      "position": {
+        "x": -4822.441,
+        "y": -7598.951,
+        "z": 1800.0
+      },
+      "velocity": {
+        "vx": 144.673,
+        "vy": 227.969,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-035",
+      "timestamp": 0.0,
+      "position": {
+        "x": -2128.896,
+        "y": -4524.135,
+        "z": 2000.0
+      },
+      "velocity": {
+        "vx": 63.867,
+        "vy": 135.724,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-036",
+      "timestamp": 0.0,
+      "position": {
+        "x": -1854.102,
+        "y": -5706.339,
+        "z": 2200.0
+      },
+      "velocity": {
+        "vx": 52.533,
+        "vy": 161.68,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-037",
+      "timestamp": 0.0,
+      "position": {
+        "x": -1311.669,
+        "y": -6876.011,
+        "z": 2400.0
+      },
+      "velocity": {
+        "vx": 35.602,
+        "vy": 186.635,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-038",
+      "timestamp": 0.0,
+      "position": {
+        "x": -502.324,
+        "y": -7984.214,
+        "z": 2600.0
+      },
+      "velocity": {
+        "vx": 13.186,
+        "vy": 209.586,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-039",
+      "timestamp": 0.0,
+      "position": {
+        "x": 565.115,
+        "y": -8982.241,
+        "z": 2800.0
+      },
+      "velocity": {
+        "vx": -14.442,
+        "vy": 229.546,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-040",
+      "timestamp": 0.0,
+      "position": {
+        "x": 936.907,
+        "y": -4911.436,
+        "z": 1000.0
+      },
+      "velocity": {
+        "vx": -46.845,
+        "vy": 245.572,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-041",
+      "timestamp": 0.0,
+      "position": {
+        "x": 1854.102,
+        "y": -5706.339,
+        "z": 1200.0
+      },
+      "velocity": {
+        "vx": -83.435,
+        "vy": 256.785,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-042",
+      "timestamp": 0.0,
+      "position": {
+        "x": 2980.455,
+        "y": -6333.789,
+        "z": 1400.0
+      },
+      "velocity": {
+        "vx": -63.867,
+        "vy": 135.724,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-043",
+      "timestamp": 0.0,
+      "position": {
+        "x": 4286.614,
+        "y": -6754.623,
+        "z": 1600.0
+      },
+      "velocity": {
+        "vx": -91.091,
+        "vy": 143.536,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-044",
+      "timestamp": 0.0,
+      "position": {
+        "x": 5736.816,
+        "y": -6934.619,
+        "z": 1800.0
+      },
+      "velocity": {
+        "vx": -121.111,
+        "vy": 146.398,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-045",
+      "timestamp": 0.0,
+      "position": {
+        "x": 3644.843,
+        "y": -3422.736,
+        "z": 2000.0
+      },
+      "velocity": {
+        "vx": -153.083,
+        "vy": 143.755,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-046",
+      "timestamp": 0.0,
+      "position": {
+        "x": 4854.102,
+        "y": -3526.712,
+        "z": 2200.0
+      },
+      "velocity": {
+        "vx": -186.074,
+        "vy": 135.191,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-047",
+      "timestamp": 0.0,
+      "position": {
+        "x": 6134.147,
+        "y": -3372.276,
+        "z": 2400.0
+      },
+      "velocity": {
+        "vx": -219.077,
+        "vy": 120.438,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-048",
+      "timestamp": 0.0,
+      "position": {
+        "x": 7438.212,
+        "y": -2944.996,
+        "z": 2600.0
+      },
+      "velocity": {
+        "vx": -251.04,
+        "vy": 99.394,
+        "vz": 5.0
+      }
+    },
+    {
+      "target_id": "VT-049",
+      "timestamp": 0.0,
+      "position": {
+        "x": 8717.248,
+        "y": -2238.209,
+        "z": 2800.0
+      },
+      "velocity": {
+        "vx": -145.287,
+        "vy": 37.303,
+        "vz": -5.0
+      }
+    },
+    {
+      "target_id": "VT-050",
+      "timestamp": 0.0,
+      "position": {
+        "x": 4960.574,
+        "y": -626.666,
+        "z": 1000.0
+      },
+      "velocity": {
+        "vx": -168.659,
+        "vy": 21.307,
+        "vz": 5.0
+      }
+    }
+  ]
+}

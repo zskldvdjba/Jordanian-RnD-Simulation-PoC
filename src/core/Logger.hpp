@@ -1,5 +1,9 @@
 ﻿#pragma once
 
+#ifdef ERROR
+#undef ERROR
+#endif
+
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -11,7 +15,7 @@ enum class LogLevel {
     DEBUG,
     INFO,
     WARNING,
-    ERROR
+    ERR
 };
 
 class Logger {
@@ -36,7 +40,7 @@ public:
     }
 
     void error(const std::string& component, double sim_time, const std::string& message) {
-        log(LogLevel::ERROR, component, sim_time, message);
+        log(LogLevel::ERR, component, sim_time, message);
     }
 
 private:

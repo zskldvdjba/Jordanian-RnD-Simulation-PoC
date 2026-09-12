@@ -42,6 +42,10 @@ struct Vector3D {
         return std::sqrt(normSquared());
     }
 
+    [[nodiscard]] double distanceTo(const Vector3D& other) const noexcept {
+        return (*this - other).norm();
+    }
+
     [[nodiscard]] bool isApprox(const Vector3D& other, double eps = 1e-6) const noexcept {
         return (std::abs(x - other.x) <= eps) &&
                (std::abs(y - other.y) <= eps) &&
@@ -56,6 +60,17 @@ struct TargetState {
     Vector3D velocity;
 };
 
+struct VirtualEventConfig {
+    std::string event_entity_id;
+    std::string target_id;
+    double spawn_time{0.0};
+    double lifetime{5.0};
+    double event_trigger_threshold{80.0};
+    std::string event_type{"SIMULATED_INTERACTION"};
+    Vector3D position;
+    Vector3D velocity;
+};
+
 struct ScenarioConfig {
     std::string scenario_id;
     std::string scenario_name;
@@ -65,6 +80,8 @@ struct ScenarioConfig {
     double duration_seconds{10.0};
     size_t target_count{0};
     std::vector<TargetState> targets;
+    size_t virtual_event_count{0};
+    std::vector<VirtualEventConfig> virtual_events;
 };
 
 } // namespace sim

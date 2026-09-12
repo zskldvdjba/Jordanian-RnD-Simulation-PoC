@@ -4,7 +4,6 @@
 #include <sstream>
 #include <cctype>
 #include <stdexcept>
-#include <iostream>
 
 namespace sim {
 
@@ -139,7 +138,6 @@ TargetState parseTarget(SimpleJsonScanner& scanner) {
         } else if (key == "velocity") {
             target.velocity = parseVec3(scanner);
         } else {
-            // Skip unknown value
             if (scanner.peek() == '"') scanner.parseString();
             else scanner.parseNumber();
         }
@@ -165,6 +163,60 @@ std::vector<TargetState> parseTargetList(SimpleJsonScanner& scanner) {
     }
     scanner.match(']');
     return targets;
+}
+
+VirtualEventConfig parseVirtualEvent(SimpleJsonScanner& scanner) {
+    if (!scanner.match('{')) {
+        throw std::runtime_error("Expected '{' for VirtualEvent");
+    }
+    VirtualEventConfig ev;
+    while (scanner.peek() != '}' && scanner.hasMore()) {
+        std::string key = scanner.parseString();
+        if (!scanner.match(':')) {
+            throw std::runtime_error("Expected ':' after key in VirtualEvent");
+        }
+        if (key == "event_entity_id") {
+            ev.event_entity_id = scanner.parseString();
+        } else if (key == "target_id" || key == "event_target_id") {
+            ev.target_id = scanner.parseString();
+        } else if (key == "spawn_time" || key == "event_spawn_time") {
+            ev.spawn_time = scanner.parseNumber();
+        } else if (key == "lifetime" || key == "event_lifetime") {
+            ev.lifetime = scanner.parseNumber();
+        } else if (key == "event_trigger_threshold") {
+            ev.event_trigger_threshold = scanner.parseNumber();
+        } else if (key == "event_type") {
+            ev.event_type = scanner.parseString();
+        } else if (key == "position" || key == "initial_position") {
+            ev.position = parseVec3(scanner);
+        } else if (key == "velocity") {
+            ev.velocity = parseVec3(scanner);
+        } else {
+            if (scanner.peek() == '"') scanner.parseString();
+            else scanner.parseNumber();
+        }
+
+        if (scanner.peek() == ',') {
+            scanner.get();
+        }
+    }
+    scanner.match('}');
+    return ev;
+}
+
+std::vector<VirtualEventConfig> parseVirtualEventList(SimpleJsonScanner& scanner) {
+    if (!scanner.match('[')) {
+        throw std::runtime_error("Expected '[' for virtual events list");
+    }
+    std::vector<VirtualEventConfig> events;
+    while (scanner.peek() != ']' && scanner.hasMore()) {
+        events.push_back(parseVirtualEvent(scanner));
+        if (scanner.peek() == ',') {
+            scanner.get();
+        }
+    }
+    scanner.match(']');
+    return events;
 }
 
 } // anonymous namespace
@@ -199,6 +251,10 @@ std::optional<ScenarioConfig> ScenarioLoader::parseJson(const std::string& json_
                 config.target_count = static_cast<size_t>(scanner.parseNumber());
             } else if (key == "targets") {
                 config.targets = parseTargetList(scanner);
+            } else if (key == "virtual_event_count") {
+                config.virtual_event_count = static_cast<size_t>(scanner.parseNumber());
+            } else if (key == "virtual_events") {
+                config.virtual_events = parseVirtualEventList(scanner);
             } else {
                 if (scanner.peek() == '"') scanner.parseString();
                 else scanner.parseNumber();
@@ -212,6 +268,9 @@ std::optional<ScenarioConfig> ScenarioLoader::parseJson(const std::string& json_
 
         if (config.target_count == 0 && !config.targets.empty()) {
             config.target_count = config.targets.size();
+        }
+        if (config.virtual_event_count == 0 && !config.virtual_events.empty()) {
+            config.virtual_event_count = config.virtual_events.size();
         }
 
         return config;

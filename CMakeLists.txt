@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+﻿cmake_minimum_required(VERSION 3.20)
 
 project(Jordanian_RnD_Simulation_PoC
     VERSION 0.1.0
@@ -41,15 +41,33 @@ set(SIM_CORE_SOURCES
 add_library(sim_core STATIC ${SIM_CORE_SOURCES})
 target_include_directories(sim_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-# S-001 Runner executable
+# Visualization module sources
+set(SIM_VIS_SOURCES
+    src/visualization/VirtualInteraction.cpp
+    src/visualization/EventManager.cpp
+    src/visualization/VisualizationAdapter.cpp
+    src/visualization/Renderer.cpp
+    src/visualization/Dashboard.cpp
+    src/visualization/VisualizationApp.cpp
+)
+
+add_library(sim_vis STATIC ${SIM_VIS_SOURCES})
+target_include_directories(sim_vis PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(sim_vis PUBLIC sim_core opengl32 glu32 gdi32 user32 psapi)
+
+# S-001 Baseline Simulation Runner executable
 add_executable(jordanian_sim_s001 src/main.cpp)
 target_link_libraries(jordanian_sim_s001 PRIVATE sim_core)
 
-# Tests executable
+# S-001-VIS 3D Visualization Application executable
+add_executable(jordanian_sim_vis src/main_vis.cpp)
+target_link_libraries(jordanian_sim_vis PRIVATE sim_vis)
+
+# Tests executable (includes S-001 and S-001-VIS test suites)
 option(ENABLE_SIM_TESTING "Build simulation unit tests" ON)
 if (ENABLE_SIM_TESTING)
     enable_testing()
     add_executable(jordanian_sim_tests tests/test_main.cpp)
-    target_link_libraries(jordanian_sim_tests PRIVATE sim_core)
+    target_link_libraries(jordanian_sim_tests PRIVATE sim_vis)
     add_test(NAME AllUnitTests COMMAND jordanian_sim_tests)
 endif()

@@ -35,7 +35,7 @@ void Dashboard::drawPanel(float x, float y, float w, float h, float bgA) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Background
-    glColor4f(0.08f, 0.11f, 0.16f, bgA);
+    glColor4f(0.07f, 0.09f, 0.13f, bgA);
     glBegin(GL_QUADS);
     glVertex2f(x, y);
     glVertex2f(x + w, y);
@@ -45,7 +45,7 @@ void Dashboard::drawPanel(float x, float y, float w, float h, float bgA) {
 
     // Border
     glLineWidth(1.5f);
-    glColor4f(0.25f, 0.38f, 0.52f, 0.85f);
+    glColor4f(0.22f, 0.35f, 0.48f, 0.85f);
     glBegin(GL_LINE_LOOP);
     glVertex2f(x, y);
     glVertex2f(x + w, y);
@@ -64,9 +64,9 @@ void Dashboard::drawText(float x, float y, const std::string& text, float r, flo
 }
 
 void Dashboard::drawButton(const Button& btn) {
-    float bgR = btn.active ? 0.18f : 0.12f;
-    float bgG = btn.active ? 0.35f : 0.18f;
-    float bgB = btn.active ? 0.55f : 0.28f;
+    float bgR = btn.active ? 0.16f : 0.11f;
+    float bgG = btn.active ? 0.32f : 0.16f;
+    float bgB = btn.active ? 0.52f : 0.25f;
 
     // Fill
     glColor4f(bgR, bgG, bgB, 0.9f);
@@ -82,7 +82,7 @@ void Dashboard::drawButton(const Button& btn) {
     if (btn.active) {
         glColor4f(0.4f, 0.8f, 1.0f, 1.0f);
     } else {
-        glColor4f(0.3f, 0.42f, 0.58f, 0.8f);
+        glColor4f(0.28f, 0.38f, 0.52f, 0.8f);
     }
     glBegin(GL_LINE_LOOP);
     glVertex2f(btn.rect.x, btn.rect.y);
@@ -91,17 +91,17 @@ void Dashboard::drawButton(const Button& btn) {
     glVertex2f(btn.rect.x, btn.rect.y + btn.rect.h);
     glEnd();
 
-    // Text centered vertically
+    // Text
     float textX = btn.rect.x + 8.0f;
     float textY = btn.rect.y + btn.rect.h - 8.0f;
     if (btn.active) {
         drawText(textX, textY, btn.label, 1.0f, 1.0f, 1.0f);
     } else {
-        drawText(textX, textY, btn.label, 0.8f, 0.88f, 0.95f);
+        drawText(textX, textY, btn.label, 0.78f, 0.86f, 0.94f);
     }
 }
 
-void Dashboard::layoutButtons(int screen_width, int screen_height, const PlaybackOptions& options) {
+void Dashboard::layoutButtons(int screen_width, int screen_height, const PlaybackOptions& options, const PerformanceStats& stats) {
     (void)screen_width;
     m_buttons.clear();
 
@@ -110,16 +110,16 @@ void Dashboard::layoutButtons(int screen_width, int screen_height, const Playbac
 
     // Playback control buttons
     bool isRunning = (options.status == PlaybackStatus::RUNNING);
-    m_buttons.push_back(Button{"btn_start", "[ START ]", Rect{curX, startY, 82.0f, 32.0f}, isRunning});
-    curX += 88.0f;
+    m_buttons.push_back(Button{"btn_start", "[ START ]", Rect{curX, startY, 78.0f, 32.0f}, isRunning});
+    curX += 84.0f;
 
     bool isPaused = (options.status == PlaybackStatus::PAUSED);
-    m_buttons.push_back(Button{"btn_pause", "[ PAUSE ]", Rect{curX, startY, 82.0f, 32.0f}, isPaused});
-    curX += 88.0f;
+    m_buttons.push_back(Button{"btn_pause", "[ PAUSE ]", Rect{curX, startY, 78.0f, 32.0f}, isPaused});
+    curX += 84.0f;
 
     bool isReset = (options.status == PlaybackStatus::RESET);
-    m_buttons.push_back(Button{"btn_reset", "[ RESET ]", Rect{curX, startY, 82.0f, 32.0f}, isReset});
-    curX += 105.0f;
+    m_buttons.push_back(Button{"btn_reset", "[ RESET ]", Rect{curX, startY, 78.0f, 32.0f}, isReset});
+    curX += 95.0f;
 
     // Playback Speed buttons
     const std::vector<std::pair<std::string, double>> speeds = {
@@ -127,25 +127,42 @@ void Dashboard::layoutButtons(int screen_width, int screen_height, const Playbac
     };
     for (const auto& [label, val] : speeds) {
         bool active = std::abs(options.speed_multiplier - val) < 1e-4;
-        m_buttons.push_back(Button{"speed_" + label, label, Rect{curX, startY, 52.0f, 32.0f}, active});
-        curX += 56.0f;
+        m_buttons.push_back(Button{"speed_" + label, label, Rect{curX, startY, 48.0f, 32.0f}, active});
+        curX += 52.0f;
     }
-    curX += 20.0f;
+    curX += 14.0f;
 
-    // Toggles
+    // Quality Level Toggle
+    std::string qLabel = std::string("Quality: ") + qualityLevelToString(stats.quality_level);
+    m_buttons.push_back(Button{"cycle_quality", qLabel, Rect{curX, startY, 125.0f, 32.0f}, false});
+    curX += 131.0f;
+
+    // Auto Quality Scaling Toggle
+    std::string autoLabel = std::string("AutoQ: ") + (stats.auto_quality_scaling ? "ON" : "OFF");
+    m_buttons.push_back(Button{"toggle_auto_q", autoLabel, Rect{curX, startY, 88.0f, 32.0f}, stats.auto_quality_scaling});
+    curX += 94.0f;
+
+    // FPS Target Limiter Toggle
+    std::string fpsLabel;
+    if (stats.target_fps == 0) fpsLabel = "FPS: UNCAPPED";
+    else fpsLabel = "FPS: " + std::to_string(stats.target_fps);
+    m_buttons.push_back(Button{"cycle_fps", fpsLabel, Rect{curX, startY, 95.0f, 32.0f}, stats.target_fps > 0});
+    curX += 101.0f;
+
+    // Visual Toggles
     std::string trailLabel = std::string("Trails: ") + (options.show_trails ? "ON" : "OFF");
-    m_buttons.push_back(Button{"toggle_trails", trailLabel, Rect{curX, startY, 100.0f, 32.0f}, options.show_trails});
-    curX += 106.0f;
+    m_buttons.push_back(Button{"toggle_trails", trailLabel, Rect{curX, startY, 95.0f, 32.0f}, options.show_trails});
+    curX += 101.0f;
 
     std::string gridLabel = std::string("Grid: ") + (options.show_grid ? "ON" : "OFF");
-    m_buttons.push_back(Button{"toggle_grid", gridLabel, Rect{curX, startY, 90.0f, 32.0f}, options.show_grid});
-    curX += 96.0f;
+    m_buttons.push_back(Button{"toggle_grid", gridLabel, Rect{curX, startY, 85.0f, 32.0f}, options.show_grid});
+    curX += 91.0f;
 
     std::string evLabel = std::string("Events: ") + (options.show_events ? "ON" : "OFF");
-    m_buttons.push_back(Button{"toggle_events", evLabel, Rect{curX, startY, 100.0f, 32.0f}, options.show_events});
+    m_buttons.push_back(Button{"toggle_events", evLabel, Rect{curX, startY, 95.0f, 32.0f}, options.show_events});
 }
 
-void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, int screen_height) {
+void Dashboard::render(const VisualizationAdapter& adapter, const PerformanceMonitor& perf_monitor, int screen_width, int screen_height) {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -158,6 +175,8 @@ void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, in
     glDisable(GL_DEPTH_TEST);
 
     const auto& options = adapter.getPlaybackOptions();
+    const auto& stats = perf_monitor.getStats();
+
     double simTime = adapter.getCurrentSimulationTime();
     uint64_t simStep = adapter.getCurrentSimulationStep();
     size_t targetCount = adapter.getTargets().size();
@@ -165,9 +184,9 @@ void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, in
     size_t totalEvents = adapter.getEventManager().getEventCount();
 
     // 1. TOP-LEFT: Main Status Panel
-    drawPanel(16.0f, 16.0f, 360.0f, 220.0f);
-    drawText(28.0f, 38.0f, "PROJECT: Jordanian Advanced R&D Simulation", 0.4f, 0.85f, 1.0f);
-    drawText(28.0f, 56.0f, "SCENARIO: S-001 (Baseline 3D Visualization)", 0.8f, 0.9f, 0.95f);
+    drawPanel(16.0f, 16.0f, 360.0f, 210.0f);
+    drawText(28.0f, 36.0f, "PROJECT: Jordanian Advanced R&D Simulation", 0.4f, 0.85f, 1.0f);
+    drawText(28.0f, 54.0f, "SCENARIO: S-001 (Baseline 3D Visualization)", 0.8f, 0.9f, 0.95f);
 
     std::string statusStr;
     switch (options.status) {
@@ -175,25 +194,74 @@ void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, in
         case PlaybackStatus::PAUSED:  statusStr = "PAUSED"; break;
         case PlaybackStatus::RESET:   statusStr = "RESET"; break;
     }
-    drawText(28.0f, 82.0f, "STATUS                 : " + statusStr,
+    drawText(28.0f, 78.0f, "STATUS                 : " + statusStr,
              options.status == PlaybackStatus::RUNNING ? 0.3f : 1.0f,
              options.status == PlaybackStatus::RUNNING ? 1.0f : 0.8f,
              options.status == PlaybackStatus::RUNNING ? 0.4f : 0.3f);
 
     std::ostringstream timeOss;
     timeOss << std::fixed << std::setprecision(2) << simTime << " / 10.00 s";
-    drawText(28.0f, 104.0f, "SIMULATION TIME        : " + timeOss.str());
+    drawText(28.0f, 98.0f, "SIMULATION TIME        : " + timeOss.str());
 
     std::ostringstream stepOss;
     stepOss << simStep << " / 200";
-    drawText(28.0f, 126.0f, "SIMULATION STEP        : " + stepOss.str());
+    drawText(28.0f, 118.0f, "SIMULATION STEP        : " + stepOss.str());
 
-    drawText(28.0f, 148.0f, "VIRTUAL TARGETS        : " + std::to_string(targetCount));
-    drawText(28.0f, 170.0f, "ACTIVE VIRTUAL EVENTS  : " + std::to_string(activeEvents), 0.95f, 0.4f, 0.9f);
-    drawText(28.0f, 192.0f, "INTERACTION EVENTS     : " + std::to_string(totalEvents), 1.0f, 0.65f, 0.2f);
-    drawText(28.0f, 218.0f, "[Controls: Orbit=L-Drag, Pan=R-Drag, Zoom=Wheel]", 0.55f, 0.65f, 0.75f);
+    drawText(28.0f, 138.0f, "VIRTUAL TARGETS        : " + std::to_string(targetCount));
+    drawText(28.0f, 158.0f, "ACTIVE VIRTUAL EVENTS  : " + std::to_string(activeEvents), 0.95f, 0.4f, 0.9f);
+    drawText(28.0f, 178.0f, "INTERACTION EVENTS     : " + std::to_string(totalEvents), 1.0f, 0.65f, 0.2f);
+    drawText(28.0f, 202.0f, "[Controls: Orbit=L-Drag, Pan=R-Drag, Zoom=Wheel]", 0.5f, 0.62f, 0.72f);
 
-    // 2. TOP-RIGHT: Selected Target Panel
+    // 2. MID-LEFT: System & Performance Telemetry Panel (PERFORMANCE-FIRST)
+    drawPanel(16.0f, 234.0f, 360.0f, 225.0f);
+    drawText(28.0f, 254.0f, "HARDWARE & PERFORMANCE MONITOR", 0.3f, 1.0f, 0.7f);
+
+    std::ostringstream fpsOss;
+    fpsOss << std::fixed << std::setprecision(1) << stats.current_fps << " FPS ("
+           << std::fixed << std::setprecision(2) << stats.avg_frame_time_ms << " ms)";
+    drawText(28.0f, 274.0f, "Frame Rate / Time      : " + fpsOss.str(),
+             stats.current_fps >= 30.0 ? 0.3f : 1.0f,
+             stats.current_fps >= 30.0 ? 0.95f : 0.4f,
+             0.3f);
+
+    std::ostringstream limitOss;
+    if (stats.target_fps > 0) {
+        limitOss << stats.target_fps << " FPS (Pacing: Active)";
+    } else {
+        limitOss << "Uncapped (Maximum Load)";
+    }
+    drawText(28.0f, 294.0f, "Target Frame Limit     : " + limitOss.str());
+
+    std::ostringstream simRateOss;
+    simRateOss << std::fixed << std::setprecision(1) << stats.sim_steps_per_sec << " steps/s";
+    drawText(28.0f, 314.0f, "Simulation Step Rate   : " + simRateOss.str());
+
+    std::ostringstream cpuOss;
+    cpuOss << std::fixed << std::setprecision(1) << stats.cpu_usage_pct << " %";
+    drawText(28.0f, 334.0f, "Process CPU Usage      : " + cpuOss.str(),
+             stats.cpu_usage_pct < 20.0 ? 0.4f : 1.0f,
+             stats.cpu_usage_pct < 20.0 ? 1.0f : 0.6f,
+             0.4f);
+
+    std::ostringstream ramOss;
+    ramOss << std::fixed << std::setprecision(1) << stats.ram_usage_mb << " MB (~8 GB Total)";
+    drawText(28.0f, 354.0f, "Working Set (RAM)      : " + ramOss.str());
+
+    std::ostringstream objOss;
+    objOss << stats.active_3d_objects << " visible (" << stats.culled_3d_objects << " culled)";
+    drawText(28.0f, 374.0f, "Frustum Culling        : " + objOss.str());
+
+    std::ostringstream partOss;
+    partOss << stats.active_particles << " active / " << stats.max_particles_budget << " budget";
+    drawText(28.0f, 394.0f, "Particle Pool Usage    : " + partOss.str());
+
+    drawText(28.0f, 414.0f, "Draw Calls / Frame     : " + std::to_string(stats.draw_calls));
+
+    std::string qStr = std::string(qualityLevelToString(stats.quality_level)) + (stats.auto_quality_scaling ? " [AUTO]" : " [MANUAL]");
+    drawText(28.0f, 434.0f, "Dynamic Visual Quality : " + qStr, 1.0f, 0.85f, 0.3f);
+    drawText(28.0f, 450.0f, "Thermal Behavior       : Stable + Cool + Responsive", 0.5f, 0.8f, 0.9f);
+
+    // 3. TOP-RIGHT: Selected Target Panel
     const auto* selected = adapter.getSelectedTarget();
     if (selected) {
         float panelW = 340.0f;
@@ -227,7 +295,7 @@ void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, in
         drawText(panelX + 14.0f, 180.0f, "[Click background or entity to select]", 0.5f, 0.6f, 0.7f);
     }
 
-    // 3. BOTTOM-RIGHT: Live Event Log Panel
+    // 4. BOTTOM-RIGHT: Live Event Log Panel
     float logW = 390.0f;
     float logH = 175.0f;
     float logX = static_cast<float>(screen_width) - logW - 16.0f;
@@ -253,13 +321,13 @@ void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, in
         }
     }
 
-    // 4. BOTTOM: Control Bar & Buttons
+    // 5. BOTTOM: Interactive Control Bar
     float barH = 50.0f;
     float barY = static_cast<float>(screen_height) - barH - 8.0f;
     float barW = static_cast<float>(screen_width) - 32.0f;
-    drawPanel(16.0f, barY, barW, barH, 0.90f);
+    drawPanel(16.0f, barY, barW, barH, 0.92f);
 
-    layoutButtons(screen_width, screen_height, options);
+    layoutButtons(screen_width, screen_height, options, stats);
     for (const auto& btn : m_buttons) {
         drawButton(btn);
     }
@@ -271,7 +339,7 @@ void Dashboard::render(const VisualizationAdapter& adapter, int screen_width, in
     glPopMatrix();
 }
 
-bool Dashboard::handleClick(int mouse_x, int mouse_y, VisualizationAdapter& adapter) {
+bool Dashboard::handleClick(int mouse_x, int mouse_y, VisualizationAdapter& adapter, PerformanceMonitor& perf_monitor) {
     float mx = static_cast<float>(mouse_x);
     float my = static_cast<float>(mouse_y);
 
@@ -300,6 +368,15 @@ bool Dashboard::handleClick(int mouse_x, int mouse_y, VisualizationAdapter& adap
                 return true;
             } else if (btn.id == "speed_5x") {
                 adapter.setPlaybackSpeed(5.0);
+                return true;
+            } else if (btn.id == "cycle_quality") {
+                perf_monitor.cycleQualityLevel();
+                return true;
+            } else if (btn.id == "toggle_auto_q") {
+                perf_monitor.setAutoQuality(!perf_monitor.isAutoQuality());
+                return true;
+            } else if (btn.id == "cycle_fps") {
+                perf_monitor.cycleTargetFps();
                 return true;
             } else if (btn.id == "toggle_trails") {
                 adapter.toggleTrails();

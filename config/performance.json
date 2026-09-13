@@ -1,0 +1,19 @@
+{
+  "defaultQuality": "MEDIUM",
+  "particleCaps": {
+    "Smoke": 300,
+    "Exhaust": 200,
+    "Beam": 100,
+    "General": 150
+  },
+  "hysteresis": {
+    "downgradeThreshold": 27.0,
+    "strongDowngradeThreshold": 24.0,
+    "upgradeThreshold": 35.0,
+    "sustainedSeconds": 3.0
+  },
+  "frameDelayTestMs": 0,
+  "lodDistanceNear": 5000.0,
+  "lodDistanceFar": 15000.0,
+  "gpuTelemetryEnabled": false
+}

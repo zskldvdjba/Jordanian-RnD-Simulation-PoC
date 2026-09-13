@@ -25,6 +25,24 @@ void Renderer::initialize(int width, int height) {
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
     glClearColor(0.06f, 0.08f, 0.11f, 1.0f);
+
+    setupLighting();
+    m_particleSystem.initialize();
+}
+
+void Renderer::setupLighting() {
+    GLfloat lightPos[] = {0.5f, 0.7f, 1.0f, 0.0f}; // Directional sun/sky light
+    GLfloat lightAmbient[] = {0.35f, 0.38f, 0.45f, 1.0f};
+    GLfloat lightDiffuse[] = {0.8f, 0.85f, 0.9f, 1.0f};
+    GLfloat lightSpecular[] = {0.4f, 0.45f, 0.5f, 1.0f};
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 }
 
 void Renderer::resize(int width, int height) {
@@ -44,7 +62,6 @@ void Renderer::pan(float delta_x, float delta_y) noexcept {
     float radAz = static_cast<float>(m_azimuth * M_PI / 180.0);
     float panSpeed = m_distance * 0.001f;
 
-    // Camera coordinate frame
     float rightX = std::cos(radAz);
     float rightY = -std::sin(radAz);
 
@@ -84,28 +101,48 @@ void Renderer::setup3DProjection() {
     double eyeY = m_targetCenter.y - m_distance * std::cos(radEl) * std::cos(radAz);
     double eyeZ = m_targetCenter.z + m_distance * std::sin(radEl);
 
+    m_cameraPos = Vector3D{eyeX, eyeY, eyeZ};
+
     gluLookAt(eyeX, eyeY, eyeZ,
               m_targetCenter.x, m_targetCenter.y, m_targetCenter.z,
               0.0, 0.0, 1.0);
 }
 
-void Renderer::renderGrid(double size, double spacing) {
+void Renderer::renderGrid(double size, double spacing, QualityLevel quality) {
+    glDisable(GL_LIGHTING);
     glLineWidth(1.0f);
     glColor4f(0.18f, 0.22f, 0.28f, 0.6f);
 
+    double actualSpacing = (quality == QualityLevel::LOW) ? (spacing * 2.0) : spacing;
+
     glBegin(GL_LINES);
-    for (double x = -size; x <= size; x += spacing) {
+    for (double x = -size; x <= size; x += actualSpacing) {
         glVertex3d(x, -size, 0.0);
         glVertex3d(x, size, 0.0);
     }
-    for (double y = -size; y <= size; y += spacing) {
+    for (double y = -size; y <= size; y += actualSpacing) {
         glVertex3d(-size, y, 0.0);
         glVertex3d(size, y, 0.0);
     }
     glEnd();
+    ++m_drawCalls;
+
+    // Optional contour ring for high/research quality
+    if (quality >= QualityLevel::HIGH) {
+        glColor4f(0.15f, 0.28f, 0.38f, 0.4f);
+        glBegin(GL_LINE_LOOP);
+        constexpr int segs = 32;
+        for (int i = 0; i < segs; ++i) {
+            double th = 2.0 * M_PI * i / segs;
+            glVertex3d(size * 0.7 * std::cos(th), size * 0.7 * std::sin(th), 0.0);
+        }
+        glEnd();
+        ++m_drawCalls;
+    }
 }
 
 void Renderer::renderAxes(double length) {
+    glDisable(GL_LIGHTING);
     glLineWidth(2.5f);
     glBegin(GL_LINES);
     // X Axis - Red
@@ -123,15 +160,20 @@ void Renderer::renderAxes(double length) {
     glVertex3d(0.0, 0.0, 0.0);
     glVertex3d(0.0, 0.0, length);
     glEnd();
+    ++m_drawCalls;
 }
 
-void Renderer::renderTrail(const TargetVisualState& target) {
+void Renderer::renderTrail(const TargetVisualState& target, QualityLevel quality) {
     if (target.trail.size() < 2) return;
 
+    glDisable(GL_LIGHTING);
     glLineWidth(1.5f);
     glBegin(GL_LINE_STRIP);
+
     size_t count = target.trail.size();
-    for (size_t i = 0; i < count; ++i) {
+    size_t step = (quality == QualityLevel::LOW) ? 2 : 1;
+
+    for (size_t i = 0; i < count; i += step) {
         float alpha = static_cast<float>(i + 1) / static_cast<float>(count) * 0.7f;
         if (target.status == TargetStatus::INTERACTED) {
             glColor4f(0.95f, 0.5f, 0.1f, alpha);
@@ -142,31 +184,43 @@ void Renderer::renderTrail(const TargetVisualState& target) {
         glVertex3d(pt.x, pt.y, pt.z);
     }
     glEnd();
+    ++m_drawCalls;
 }
 
-void Renderer::renderTarget(const TargetVisualState& target, bool isSelected) {
+void Renderer::renderTarget(const TargetVisualState& target, bool isSelected, LodLevel lod, QualityLevel quality) {
     const auto& pos = target.position;
     const auto& vel = target.velocity;
 
-    // Draw velocity vector line
-    double velScale = 4.0; // 4 seconds of projected motion
-    glLineWidth(2.0f);
-    glBegin(GL_LINES);
-    if (isSelected) {
-        glColor4f(1.0f, 0.95f, 0.2f, 0.9f);
-    } else if (target.status == TargetStatus::INTERACTED) {
-        glColor4f(1.0f, 0.5f, 0.1f, 0.8f);
-    } else {
-        glColor4f(0.2f, 0.8f, 1.0f, 0.7f);
+    // Velocity projection vector (only drawn for HIGH and MEDIUM LOD)
+    if (lod != LodLevel::LOW) {
+        glDisable(GL_LIGHTING);
+        double velScale = 4.0;
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        if (isSelected) {
+            glColor4f(1.0f, 0.95f, 0.2f, 0.9f);
+        } else if (target.status == TargetStatus::INTERACTED) {
+            glColor4f(1.0f, 0.5f, 0.1f, 0.8f);
+        } else {
+            glColor4f(0.2f, 0.8f, 1.0f, 0.7f);
+        }
+        glVertex3d(pos.x, pos.y, pos.z);
+        glVertex3d(pos.x + vel.x * velScale, pos.y + vel.y * velScale, pos.z + vel.z * velScale);
+        glEnd();
+        ++m_drawCalls;
     }
-    glVertex3d(pos.x, pos.y, pos.z);
-    glVertex3d(pos.x + vel.x * velScale, pos.y + vel.y * velScale, pos.z + vel.z * velScale);
-    glEnd();
 
-    // Draw 3D diamond/octahedron marker
+    // 3D Mesh LOD
     double r = isSelected ? 180.0 : 120.0;
     glPushMatrix();
     glTranslated(pos.x, pos.y, pos.z);
+
+    if (quality >= QualityLevel::HIGH) {
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+    } else {
+        glDisable(GL_LIGHTING);
+    }
 
     if (isSelected) {
         glColor4f(1.0f, 0.95f, 0.2f, 1.0f);
@@ -176,26 +230,67 @@ void Renderer::renderTarget(const TargetVisualState& target, bool isSelected) {
         glColor4f(0.2f, 0.8f, 1.0f, 0.9f);
     }
 
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(0, 0, r);
-    glVertex3d(r, 0, 0);
-    glVertex3d(0, r, 0);
-    glVertex3d(-r, 0, 0);
-    glVertex3d(0, -r, 0);
-    glVertex3d(r, 0, 0);
-    glEnd();
+    if (lod == LodLevel::LOW) {
+        // Lightweight low-poly tetrahedron marker for distant entities
+        double s = r * 0.6;
+        glBegin(GL_TRIANGLES);
+        // Front face
+        glVertex3d(0, 0, s);
+        glVertex3d(s, 0, -s * 0.5);
+        glVertex3d(-s, 0, -s * 0.5);
+        // Right face
+        glVertex3d(0, 0, s);
+        glVertex3d(0, s, -s * 0.5);
+        glVertex3d(s, 0, -s * 0.5);
+        // Left face
+        glVertex3d(0, 0, s);
+        glVertex3d(-s, 0, -s * 0.5);
+        glVertex3d(0, s, -s * 0.5);
+        // Bottom face
+        glVertex3d(0, s, -s * 0.5);
+        glVertex3d(0, 0, s);
+        glVertex3d(0, -s, -s * 0.5);
+        glEnd();
+    } else if (lod == LodLevel::MEDIUM) {
+        // Simplified diamond marker (4 faces)
+        glBegin(GL_TRIANGLES);
+        // Top pyramid simplified
+        glNormal3f(0.577f, 0.577f, 0.577f);
+        glVertex3d(0, 0, r); glVertex3d(r, 0, 0); glVertex3d(0, r, 0);
+        glNormal3f(-0.577f, 0.577f, 0.577f);
+        glVertex3d(0, 0, r); glVertex3d(0, r, 0); glVertex3d(-r, 0, 0);
+        glNormal3f(-0.577f, -0.577f, 0.577f);
+        glVertex3d(0, 0, r); glVertex3d(-r, 0, 0); glVertex3d(0, -r, 0);
+        glNormal3f(0.577f, -0.577f, 0.577f);
+        glVertex3d(0, 0, r); glVertex3d(0, -r, 0); glVertex3d(r, 0, 0);
+        glEnd();
+    } else {
+        // Detailed 8-face octahedron
+        glBegin(GL_TRIANGLE_FAN);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        glVertex3d(0, 0, r);
+        glVertex3d(r, 0, 0);
+        glVertex3d(0, r, 0);
+        glVertex3d(-r, 0, 0);
+        glVertex3d(0, -r, 0);
+        glVertex3d(r, 0, 0);
+        glEnd();
 
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(0, 0, -r);
-    glVertex3d(r, 0, 0);
-    glVertex3d(0, -r, 0);
-    glVertex3d(-r, 0, 0);
-    glVertex3d(0, r, 0);
-    glVertex3d(r, 0, 0);
-    glEnd();
+        glBegin(GL_TRIANGLE_FAN);
+        glNormal3f(0.0f, 0.0f, -1.0f);
+        glVertex3d(0, 0, -r);
+        glVertex3d(r, 0, 0);
+        glVertex3d(0, -r, 0);
+        glVertex3d(-r, 0, 0);
+        glVertex3d(0, r, 0);
+        glVertex3d(r, 0, 0);
+        glEnd();
+    }
+    ++m_drawCalls;
 
-    // Selection ring / halo
-    if (isSelected) {
+    // Selection ring / halo (only when selected and not at low LOD)
+    if (isSelected && lod != LodLevel::LOW) {
+        glDisable(GL_LIGHTING);
         glLineWidth(2.0f);
         glColor4f(1.0f, 1.0f, 0.3f, 0.9f);
         glBegin(GL_LINE_LOOP);
@@ -206,6 +301,7 @@ void Renderer::renderTarget(const TargetVisualState& target, bool isSelected) {
             glVertex3d(ringRadius * std::cos(theta), ringRadius * std::sin(theta), 0);
         }
         glEnd();
+        ++m_drawCalls;
     }
 
     glPopMatrix();
@@ -217,15 +313,15 @@ void Renderer::renderInteractionEntity(const VirtualInteractionEntity& entity) {
     const auto& pos = entity.getPosition();
     const auto& vel = entity.getVelocity();
 
-    // Draw magenta trail vector
+    glDisable(GL_LIGHTING);
     glLineWidth(2.0f);
     glColor4f(0.95f, 0.2f, 0.85f, 0.8f);
     glBegin(GL_LINES);
     glVertex3d(pos.x, pos.y, pos.z);
     glVertex3d(pos.x - vel.x * 0.8, pos.y - vel.y * 0.8, pos.z - vel.z * 0.8);
     glEnd();
+    ++m_drawCalls;
 
-    // Draw magenta diamond
     double r = 160.0;
     glPushMatrix();
     glTranslated(pos.x, pos.y, pos.z);
@@ -249,6 +345,7 @@ void Renderer::renderInteractionEntity(const VirtualInteractionEntity& entity) {
     glVertex3d(r, 0, 0);
     glEnd();
     glPopMatrix();
+    ++m_drawCalls;
 }
 
 void Renderer::renderVisualEffect(const VisualEffect& effect, double sim_time) {
@@ -260,6 +357,7 @@ void Renderer::renderVisualEffect(const VisualEffect& effect, double sim_time) {
     double currentR = effect.max_radius * std::sin(p * M_PI * 0.5);
     float alpha = static_cast<float>(1.0 - p) * 0.85f;
 
+    glDisable(GL_LIGHTING);
     glLineWidth(2.5f);
     glColor4f(1.0f, 0.6f, 0.2f, alpha);
 
@@ -267,7 +365,7 @@ void Renderer::renderVisualEffect(const VisualEffect& effect, double sim_time) {
     glTranslated(effect.position.x, effect.position.y, effect.position.z);
 
     glBegin(GL_LINE_LOOP);
-    constexpr int segments = 32;
+    constexpr int segments = 24;
     for (int i = 0; i < segments; ++i) {
         double theta = 2.0 * M_PI * i / segments;
         glVertex3d(currentR * std::cos(theta), currentR * std::sin(theta), 0.0);
@@ -282,39 +380,81 @@ void Renderer::renderVisualEffect(const VisualEffect& effect, double sim_time) {
     glEnd();
 
     glPopMatrix();
+    m_drawCalls += 2;
 }
 
-void Renderer::render(const VisualizationAdapter& adapter) {
+void Renderer::render(const VisualizationAdapter& adapter, PerformanceMonitor& perf_monitor) {
+    m_drawCalls = 0;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     setup3DProjection();
 
+    // Extract frustum matrices
+    double modelview[16];
+    double projection[16];
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+    glGetDoublev(GL_PROJECTION_MATRIX, projection);
+    m_frustum.updateFromMatrices(modelview, projection);
+
     const auto& options = adapter.getPlaybackOptions();
     double simTime = adapter.getCurrentSimulationTime();
+    QualityLevel quality = perf_monitor.getQualityLevel();
+    const auto& config = perf_monitor.getConfig();
+    m_frustum.setLodDistances(config.lodDistanceNear, config.lodDistanceFar);
 
     if (options.show_grid) {
-        renderGrid(20000.0, 2000.0);
+        renderGrid(20000.0, 2000.0, quality);
         renderAxes(5000.0);
     }
 
+    size_t activeObjects = 0;
+    size_t culledObjects = 0;
+
     const auto& targets = adapter.getTargets();
     for (const auto& tgt : targets) {
-        if (options.show_trails) {
-            renderTrail(tgt);
+        // Frustum Culling
+        if (!m_frustum.isSphereInside(tgt.position, 250.0)) {
+            ++culledObjects;
+            continue; // Culled! Skip drawing entirely
         }
+
+        ++activeObjects;
+
+        double distToCamera = (tgt.position - m_cameraPos).norm();
+        LodLevel lod = m_frustum.getLodForDistance(distToCamera);
+
+        if (options.show_trails) {
+            renderTrail(tgt, quality);
+        }
+
         bool isSelected = (tgt.target_id == options.selected_target_id);
-        renderTarget(tgt, isSelected);
+        renderTarget(tgt, isSelected, lod, quality);
     }
 
     if (options.show_events) {
         for (const auto& entity : adapter.getInteractionEntities()) {
-            renderInteractionEntity(entity);
+            if (m_frustum.isSphereInside(entity.getPosition(), 200.0)) {
+                renderInteractionEntity(entity);
+            }
         }
     }
 
     for (const auto& eff : adapter.getVisualEffects()) {
         renderVisualEffect(eff, simTime);
     }
+
+    // Render pooled particles
+    m_particleSystem.render(quality);
+    ++m_drawCalls;
+
+    // Record stats to monitor
+    perf_monitor.recordRenderStats(
+        activeObjects,
+        culledObjects,
+        m_particleSystem.getActiveCount(),
+        m_particleSystem.getBudget(quality),
+        m_drawCalls
+    );
 }
 
 std::string Renderer::pickTarget(int mouse_x, int mouse_y, const std::vector<TargetVisualState>& targets) const {
@@ -327,17 +467,16 @@ std::string Renderer::pickTarget(int mouse_x, int mouse_y, const std::vector<Tar
     glGetIntegerv(GL_VIEWPORT, viewport);
 
     std::string closestId;
-    double minDistanceSq = 25.0 * 25.0; // 25 pixel radius threshold
+    double minDistanceSq = 25.0 * 25.0;
 
     for (const auto& tgt : targets) {
         GLdouble winX, winY, winZ;
         if (gluProject(tgt.position.x, tgt.position.y, tgt.position.z,
                        modelview, projection, viewport,
                        &winX, &winY, &winZ) == GL_TRUE) {
-            // Check if in front of near plane
             if (winZ < 0.0 || winZ > 1.0) continue;
 
-            double screenY = viewport[3] - winY; // OpenGL y-inversion
+            double screenY = viewport[3] - winY;
             double dx = winX - mouse_x;
             double dy = screenY - mouse_y;
             double distSq = dx * dx + dy * dy;

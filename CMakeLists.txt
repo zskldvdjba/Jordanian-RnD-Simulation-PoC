@@ -40,6 +40,9 @@ set(SIM_CORE_SOURCES
 
 add_library(sim_core STATIC ${SIM_CORE_SOURCES})
 target_include_directories(sim_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+if (NOT MSVC)
+    target_link_libraries(sim_core PUBLIC pthread)
+endif()
 
 # Visualization module sources
 set(SIM_VIS_SOURCES
@@ -49,6 +52,9 @@ set(SIM_VIS_SOURCES
     src/visualization/Renderer.cpp
     src/visualization/Dashboard.cpp
     src/visualization/VisualizationApp.cpp
+    src/visualization/PerformanceMonitor.cpp
+    src/visualization/ParticleSystem.cpp
+    src/visualization/Frustum.cpp
 )
 
 add_library(sim_vis STATIC ${SIM_VIS_SOURCES})

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "VisualizationState.hpp"
+#include "PerformanceMonitor.hpp"
 #include <windows.h>
 #include <GL/gl.h>
 #include <string>
@@ -34,18 +35,18 @@ public:
     ~Dashboard();
 
     void initialize(HDC hdc);
-    void render(const VisualizationAdapter& adapter, int screen_width, int screen_height);
-    bool handleClick(int mouse_x, int mouse_y, VisualizationAdapter& adapter);
+    void render(const VisualizationAdapter& adapter, const PerformanceMonitor& perf_monitor, int screen_width, int screen_height);
+    bool handleClick(int mouse_x, int mouse_y, VisualizationAdapter& adapter, PerformanceMonitor& perf_monitor);
 
 private:
     GLuint m_fontListBase{0};
     bool m_fontInitialized{false};
     std::vector<Button> m_buttons;
 
-    void drawPanel(float x, float y, float w, float h, float bgA = 0.82f);
+    void drawPanel(float x, float y, float w, float h, float bgA = 0.84f);
     void drawText(float x, float y, const std::string& text, float r = 0.9f, float g = 0.92f, float b = 0.95f);
     void drawButton(const Button& btn);
-    void layoutButtons(int screen_width, int screen_height, const PlaybackOptions& options);
+    void layoutButtons(int screen_width, int screen_height, const PlaybackOptions& options, const PerformanceStats& stats);
 };
 
 } // namespace sim::vis

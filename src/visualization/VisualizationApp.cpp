@@ -119,6 +119,7 @@ bool VisualizationApp::initialize(const std::string& scenario_path, int width, i
 
     m_renderer.initialize(m_width, m_height);
     m_dashboard.initialize(m_hdc);
+    m_perfMonitor.loadConfig("config/performance.json");
 
     ShowWindow(m_hwnd, SW_SHOW);
     UpdateWindow(m_hwnd);
@@ -141,7 +142,7 @@ void VisualizationApp::processInput(UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_LBUTTONDOWN: {
             int mx = LOWORD(lParam);
             int my = HIWORD(lParam);
-            if (!m_dashboard.handleClick(mx, my, m_adapter)) {
+            if (!m_dashboard.handleClick(mx, my, m_adapter, m_perfMonitor)) {
                 // If dashboard didn't consume click, test target picking
                 std::string picked = m_renderer.pickTarget(mx, my, m_adapter.getTargets());
                 if (!picked.empty()) {
@@ -254,13 +255,26 @@ int VisualizationApp::run() {
         lastFrameTime = now;
 
         m_adapter.update(wallDt);
-        m_renderer.render(m_adapter);
-        m_dashboard.render(m_adapter, m_width, m_height);
+        m_perfMonitor.update(wallDt, m_adapter.getCurrentSimulationTime(), m_adapter.getCurrentSimulationStep());
+        m_renderer.render(m_adapter, m_perfMonitor);
+        m_dashboard.render(m_adapter, m_perfMonitor, m_width, m_height);
 
         SwapBuffers(m_hdc);
 
-        // Frame rate limiter (~60 FPS) to keep CPU/GPU cool
-        Sleep(1);
+        int targetFps = m_perfMonitor.getTargetFps();
+        int frameDelayMs = m_perfMonitor.getConfig().frameDelayTestMs;
+        if (frameDelayMs > 0) {
+            Sleep(static_cast<DWORD>(frameDelayMs));
+        } else if (targetFps > 0) {
+            double targetFrameTime = 1000.0 / targetFps;
+            auto frameEnd = std::chrono::high_resolution_clock::now();
+            double elapsedMs = std::chrono::duration<double, std::milli>(frameEnd - now).count();
+            if (elapsedMs < targetFrameTime) {
+                Sleep(static_cast<DWORD>(targetFrameTime - elapsedMs));
+            }
+        } else {
+            Sleep(1);
+        }
     }
 
     return 0;
@@ -290,8 +304,9 @@ BenchmarkMetrics VisualizationApp::runBenchmark(int num_frames) {
         auto simEnd = std::chrono::high_resolution_clock::now();
         simUpdateTimes.push_back(std::chrono::duration<double, std::micro>(simEnd - simStart).count());
 
-        m_renderer.render(m_adapter);
-        m_dashboard.render(m_adapter, m_width, m_height);
+        m_perfMonitor.update(0.016667, m_adapter.getCurrentSimulationTime(), m_adapter.getCurrentSimulationStep());
+        m_renderer.render(m_adapter, m_perfMonitor);
+        m_dashboard.render(m_adapter, m_perfMonitor, m_width, m_height);
         SwapBuffers(m_hdc);
 
         auto frameEnd = std::chrono::high_resolution_clock::now();

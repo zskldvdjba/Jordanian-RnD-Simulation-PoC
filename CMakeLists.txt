@@ -55,6 +55,7 @@ set(SIM_VIS_SOURCES
     src/visualization/PerformanceMonitor.cpp
     src/visualization/ParticleSystem.cpp
     src/visualization/Frustum.cpp
+    src/visualization/AssetManager.cpp
 )
 
 add_library(sim_vis STATIC ${SIM_VIS_SOURCES})

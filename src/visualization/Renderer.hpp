@@ -4,6 +4,7 @@
 #include "Frustum.hpp"
 #include "ParticleSystem.hpp"
 #include "PerformanceMonitor.hpp"
+#include "AssetManager.hpp"
 #include <string>
 
 namespace sim::vis {
@@ -28,6 +29,7 @@ public:
     [[nodiscard]] int getHeight() const noexcept { return m_height; }
 
     [[nodiscard]] ParticleSystem& getParticleSystem() noexcept { return m_particleSystem; }
+    [[nodiscard]] AssetManager& getAssetManager() noexcept { return m_assetManager; }
 
 private:
     int m_width{1280};
@@ -43,16 +45,19 @@ private:
     // Performance & Optimization
     Frustum m_frustum;
     ParticleSystem m_particleSystem;
+    AssetManager m_assetManager;
     size_t m_drawCalls{0};
 
     void setup3DProjection();
     void setupLighting();
     void renderGrid(double size, double spacing, QualityLevel quality);
     void renderAxes(double length);
+    void renderAsset(const AssetMesh& mesh, const Vector3D& position, QualityLevel quality, float scale = 1.0f);
     void renderTarget(const TargetVisualState& target, bool isSelected, LodLevel lod, QualityLevel quality);
     void renderTrail(const TargetVisualState& target, QualityLevel quality);
     void renderInteractionEntity(const VirtualInteractionEntity& entity);
     void renderVisualEffect(const VisualEffect& effect, double sim_time);
+    void renderEnvironment(QualityLevel quality);
 };
 
 } // namespace sim::vis

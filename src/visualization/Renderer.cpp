@@ -28,6 +28,7 @@ void Renderer::initialize(int width, int height) {
 
     setupLighting();
     m_particleSystem.initialize();
+    m_assetManager.initialize();
 }
 
 void Renderer::setupLighting() {
@@ -191,7 +192,6 @@ void Renderer::renderTarget(const TargetVisualState& target, bool isSelected, Lo
     const auto& pos = target.position;
     const auto& vel = target.velocity;
 
-    // Velocity projection vector (only drawn for HIGH and MEDIUM LOD)
     if (lod != LodLevel::LOW) {
         glDisable(GL_LIGHTING);
         double velScale = 4.0;
@@ -210,101 +210,84 @@ void Renderer::renderTarget(const TargetVisualState& target, bool isSelected, Lo
         ++m_drawCalls;
     }
 
-    // 3D Mesh LOD
-    double r = isSelected ? 180.0 : 120.0;
-    glPushMatrix();
-    glTranslated(pos.x, pos.y, pos.z);
-
-    if (quality >= QualityLevel::HIGH) {
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-    } else {
-        glDisable(GL_LIGHTING);
-    }
-
-    if (isSelected) {
-        glColor4f(1.0f, 0.95f, 0.2f, 1.0f);
-    } else if (target.status == TargetStatus::INTERACTED) {
-        glColor4f(1.0f, 0.5f, 0.1f, 0.95f);
-    } else {
-        glColor4f(0.2f, 0.8f, 1.0f, 0.9f);
-    }
+    float assetScale = isSelected ? 1.4f : 1.0f;
 
     if (lod == LodLevel::LOW) {
-        // Lightweight low-poly tetrahedron marker for distant entities
+        double r = isSelected ? 108.0 : 72.0;
+        glPushMatrix();
+        glTranslated(pos.x, pos.y, pos.z);
+
+        if (quality >= QualityLevel::HIGH) {
+            glEnable(GL_LIGHTING);
+            glEnable(GL_LIGHT0);
+        } else {
+            glDisable(GL_LIGHTING);
+        }
+
+        if (isSelected) {
+            glColor4f(1.0f, 0.95f, 0.2f, 1.0f);
+        } else if (target.status == TargetStatus::INTERACTED) {
+            glColor4f(1.0f, 0.5f, 0.1f, 0.95f);
+        } else {
+            glColor4f(0.2f, 0.8f, 1.0f, 0.9f);
+        }
+
         double s = r * 0.6;
         glBegin(GL_TRIANGLES);
-        // Front face
         glVertex3d(0, 0, s);
         glVertex3d(s, 0, -s * 0.5);
         glVertex3d(-s, 0, -s * 0.5);
-        // Right face
         glVertex3d(0, 0, s);
         glVertex3d(0, s, -s * 0.5);
         glVertex3d(s, 0, -s * 0.5);
-        // Left face
         glVertex3d(0, 0, s);
         glVertex3d(-s, 0, -s * 0.5);
         glVertex3d(0, s, -s * 0.5);
-        // Bottom face
         glVertex3d(0, s, -s * 0.5);
         glVertex3d(0, 0, s);
         glVertex3d(0, -s, -s * 0.5);
         glEnd();
-    } else if (lod == LodLevel::MEDIUM) {
-        // Simplified diamond marker (4 faces)
-        glBegin(GL_TRIANGLES);
-        // Top pyramid simplified
-        glNormal3f(0.577f, 0.577f, 0.577f);
-        glVertex3d(0, 0, r); glVertex3d(r, 0, 0); glVertex3d(0, r, 0);
-        glNormal3f(-0.577f, 0.577f, 0.577f);
-        glVertex3d(0, 0, r); glVertex3d(0, r, 0); glVertex3d(-r, 0, 0);
-        glNormal3f(-0.577f, -0.577f, 0.577f);
-        glVertex3d(0, 0, r); glVertex3d(-r, 0, 0); glVertex3d(0, -r, 0);
-        glNormal3f(0.577f, -0.577f, 0.577f);
-        glVertex3d(0, 0, r); glVertex3d(0, -r, 0); glVertex3d(r, 0, 0);
-        glEnd();
-    } else {
-        // Detailed 8-face octahedron
-        glBegin(GL_TRIANGLE_FAN);
-        glNormal3f(0.0f, 0.0f, 1.0f);
-        glVertex3d(0, 0, r);
-        glVertex3d(r, 0, 0);
-        glVertex3d(0, r, 0);
-        glVertex3d(-r, 0, 0);
-        glVertex3d(0, -r, 0);
-        glVertex3d(r, 0, 0);
-        glEnd();
-
-        glBegin(GL_TRIANGLE_FAN);
-        glNormal3f(0.0f, 0.0f, -1.0f);
-        glVertex3d(0, 0, -r);
-        glVertex3d(r, 0, 0);
-        glVertex3d(0, -r, 0);
-        glVertex3d(-r, 0, 0);
-        glVertex3d(0, r, 0);
-        glVertex3d(r, 0, 0);
-        glEnd();
-    }
-    ++m_drawCalls;
-
-    // Selection ring / halo (only when selected and not at low LOD)
-    if (isSelected && lod != LodLevel::LOW) {
-        glDisable(GL_LIGHTING);
-        glLineWidth(2.0f);
-        glColor4f(1.0f, 1.0f, 0.3f, 0.9f);
-        glBegin(GL_LINE_LOOP);
-        constexpr int segments = 24;
-        double ringRadius = r * 1.8;
-        for (int i = 0; i < segments; ++i) {
-            double theta = 2.0 * M_PI * i / segments;
-            glVertex3d(ringRadius * std::cos(theta), ringRadius * std::sin(theta), 0);
-        }
-        glEnd();
         ++m_drawCalls;
-    }
 
-    glPopMatrix();
+        if (isSelected && lod != LodLevel::LOW) {
+            glDisable(GL_LIGHTING);
+            glLineWidth(2.0f);
+            glColor4f(1.0f, 1.0f, 0.3f, 0.9f);
+            double ringRadius = r * 1.8;
+            glBegin(GL_LINE_LOOP);
+            constexpr int segments = 24;
+            for (int i = 0; i < segments; ++i) {
+                double theta = 2.0 * M_PI * i / segments;
+                glVertex3d(ringRadius * std::cos(theta), ringRadius * std::sin(theta), 0);
+            }
+            glEnd();
+            ++m_drawCalls;
+        }
+
+        glPopMatrix();
+    } else {
+        const auto& lpMesh = m_assetManager.getMesh(AssetType::LAUNCHER_PLATFORM, assetScale);
+
+        if (isSelected) {
+            glPushMatrix();
+            glTranslated(pos.x, pos.y, pos.z);
+            glDisable(GL_LIGHTING);
+            glLineWidth(2.0f);
+            glColor4f(1.0f, 1.0f, 0.3f, 0.9f);
+            double ringRadius = lpMesh.boundingRadius * assetScale * 1.3;
+            glBegin(GL_LINE_LOOP);
+            constexpr int segments = 24;
+            for (int i = 0; i < segments; ++i) {
+                double theta = 2.0 * M_PI * i / segments;
+                glVertex3d(ringRadius * std::cos(theta), ringRadius * std::sin(theta), 0);
+            }
+            glEnd();
+            ++m_drawCalls;
+            glPopMatrix();
+        }
+
+        renderAsset(lpMesh, pos, quality, assetScale);
+    }
 }
 
 void Renderer::renderInteractionEntity(const VirtualInteractionEntity& entity) {
@@ -322,30 +305,45 @@ void Renderer::renderInteractionEntity(const VirtualInteractionEntity& entity) {
     glEnd();
     ++m_drawCalls;
 
-    double r = 160.0;
-    glPushMatrix();
-    glTranslated(pos.x, pos.y, pos.z);
-    glColor4f(1.0f, 0.25f, 0.9f, 1.0f);
+    const auto& eventType = entity.getEventType();
+    const AssetMesh* meshPtr = nullptr;
+    const auto& detectorMesh = m_assetManager.getMesh(AssetType::RADAR_NODE);
+    const auto& emitterMesh = m_assetManager.getMesh(AssetType::EMITTER_POINT);
 
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(0, 0, r);
-    glVertex3d(r, 0, 0);
-    glVertex3d(0, r, 0);
-    glVertex3d(-r, 0, 0);
-    glVertex3d(0, -r, 0);
-    glVertex3d(r, 0, 0);
-    glEnd();
+    if (eventType == "VE-001") {
+        meshPtr = &detectorMesh;
+    } else {
+        meshPtr = &emitterMesh;
+    }
 
-    glBegin(GL_TRIANGLE_FAN);
-    glVertex3d(0, 0, -r);
-    glVertex3d(r, 0, 0);
-    glVertex3d(0, -r, 0);
-    glVertex3d(-r, 0, 0);
-    glVertex3d(0, r, 0);
-    glVertex3d(r, 0, 0);
-    glEnd();
-    glPopMatrix();
-    ++m_drawCalls;
+    if (meshPtr && !meshPtr->empty()) {
+        renderAsset(*meshPtr, pos, QualityLevel::HIGH);
+    } else {
+        glPushMatrix();
+        glTranslated(pos.x, pos.y, pos.z);
+        glColor4f(1.0f, 0.25f, 0.9f, 1.0f);
+
+        double r = 160.0;
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex3d(0, 0, r);
+        glVertex3d(r, 0, 0);
+        glVertex3d(0, r, 0);
+        glVertex3d(-r, 0, 0);
+        glVertex3d(0, -r, 0);
+        glVertex3d(r, 0, 0);
+        glEnd();
+
+        glBegin(GL_TRIANGLE_FAN);
+        glVertex3d(0, 0, -r);
+        glVertex3d(r, 0, 0);
+        glVertex3d(0, -r, 0);
+        glVertex3d(-r, 0, 0);
+        glVertex3d(0, r, 0);
+        glVertex3d(r, 0, 0);
+        glEnd();
+        glPopMatrix();
+        ++m_drawCalls;
+    }
 }
 
 void Renderer::renderVisualEffect(const VisualEffect& effect, double sim_time) {
@@ -383,6 +381,75 @@ void Renderer::renderVisualEffect(const VisualEffect& effect, double sim_time) {
     m_drawCalls += 2;
 }
 
+void Renderer::renderAsset(const AssetMesh& mesh, const Vector3D& position, QualityLevel quality, float scale) {
+    if (mesh.empty()) return;
+
+    glPushMatrix();
+    glTranslated(position.x, position.y, position.z);
+    if (scale != 1.0f) {
+        glScaled(scale, scale, scale);
+    }
+
+    if (quality >= QualityLevel::HIGH) {
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+    } else {
+        glDisable(GL_LIGHTING);
+    }
+
+    glBegin(GL_TRIANGLES);
+    for (const auto& v : mesh.vertices) {
+        glNormal3f(v.nx, v.ny, v.nz);
+        glColor4ub(v.r, v.g, v.b, v.a);
+        glVertex3f(v.px, v.py, v.pz);
+    }
+    glEnd();
+    ++m_drawCalls;
+
+    glPopMatrix();
+}
+
+void Renderer::renderEnvironment(QualityLevel quality) {
+    glDisable(GL_LIGHTING);
+
+    float gR = 0.12f, gG = 0.15f, gB = 0.18f;
+    float gSize = 30000.0f;
+
+    glBegin(GL_QUADS);
+    glColor4f(gR, gG, gB, 0.4f);
+    glVertex3f(-gSize, -gSize, -2.0f);
+    glVertex3f(gSize, -gSize, -2.0f);
+    glVertex3f(gSize, gSize, -2.0f);
+    glVertex3f(-gSize, gSize, -2.0f);
+    glEnd();
+    ++m_drawCalls;
+
+    if (quality >= QualityLevel::HIGH) {
+        float horizonR = 15000.0f;
+        int segs = (quality >= QualityLevel::RESEARCH) ? 48 : 32;
+        glColor4f(0.15f, 0.22f, 0.30f, 0.3f);
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < segs; ++i) {
+            float theta = 2.0f * 3.14159265f * i / segs;
+            glVertex3f(horizonR * std::cos(theta), horizonR * std::sin(theta), -1.0f);
+        }
+        glEnd();
+        ++m_drawCalls;
+
+        glColor4f(0.12f, 0.18f, 0.25f, 0.2f);
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < segs; ++i) {
+            float theta = 2.0f * 3.14159265f * i / segs;
+            glVertex3f(horizonR * 0.6f * std::cos(theta), horizonR * 0.6f * std::sin(theta), -1.0f);
+        }
+        glEnd();
+        ++m_drawCalls;
+    }
+
+    const auto& ccMesh = m_assetManager.getMesh(AssetType::CONTROL_CENTER);
+    renderAsset(ccMesh, Vector3D{0.0, 0.0, 0.0}, quality);
+}
+
 void Renderer::render(const VisualizationAdapter& adapter, PerformanceMonitor& perf_monitor) {
     m_drawCalls = 0;
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -403,6 +470,7 @@ void Renderer::render(const VisualizationAdapter& adapter, PerformanceMonitor& p
     m_frustum.setLodDistances(config.lodDistanceNear, config.lodDistanceFar);
 
     if (options.show_grid) {
+        renderEnvironment(quality);
         renderGrid(20000.0, 2000.0, quality);
         renderAxes(5000.0);
     }
@@ -429,6 +497,10 @@ void Renderer::render(const VisualizationAdapter& adapter, PerformanceMonitor& p
 
         bool isSelected = (tgt.target_id == options.selected_target_id);
         renderTarget(tgt, isSelected, lod, quality);
+
+        if (quality >= QualityLevel::MEDIUM && tgt.speed > 50.0) {
+            m_particleSystem.spawnExhaust(tgt.position, tgt.velocity);
+        }
     }
 
     if (options.show_events) {
@@ -441,6 +513,13 @@ void Renderer::render(const VisualizationAdapter& adapter, PerformanceMonitor& p
 
     for (const auto& eff : adapter.getVisualEffects()) {
         renderVisualEffect(eff, simTime);
+
+        if (eff.active) {
+            double progress = eff.getProgress(simTime);
+            if (progress < 0.15) {
+                m_particleSystem.spawnEventBurst(eff.position, 8);
+            }
+        }
     }
 
     // Render pooled particles

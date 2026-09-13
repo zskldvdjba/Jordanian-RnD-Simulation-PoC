@@ -8,6 +8,10 @@
 #include "visualization/PerformanceMonitor.hpp"
 #include "visualization/Frustum.hpp"
 #include "visualization/ParticleSystem.hpp"
+#include "visualization/AssetManager.hpp"
+#include "visualization/models/RadarNodeMesh.hpp"
+#include "visualization/models/ControlCenterMesh.hpp"
+#include "visualization/models/LauncherPlatformMesh.hpp"
 #include <iostream>
 #include <cassert>
 #include <cmath>
@@ -676,6 +680,178 @@ bool test_determinism_across_quality_levels() {
     return true;
 }
 
+// ==========================================
+// S-001-VIS-ASSETS Asset System Tests
+// ==========================================
+
+bool test_asset_manager_initialization() {
+    std::cout << "[TEST] Running test_asset_manager_initialization...\n";
+    sim::vis::AssetManager mgr;
+    ASSERT_TRUE(!mgr.isInitialized(), "Should not be initialized before initialize()");
+
+    mgr.initialize();
+    ASSERT_TRUE(mgr.isInitialized(), "Should be initialized after initialize()");
+
+    mgr.initialize();
+    ASSERT_TRUE(mgr.isInitialized(), "Double initialize should be safe");
+
+    std::cout << "[+] PASS: test_asset_manager_initialization\n";
+    return true;
+}
+
+bool test_asset_mesh_generation() {
+    std::cout << "[TEST] Running test_asset_mesh_generation...\n";
+    sim::vis::AssetManager mgr;
+    mgr.initialize();
+
+    const auto& radarMesh = mgr.getMesh(sim::vis::AssetType::RADAR_NODE);
+    ASSERT_TRUE(!radarMesh.empty(), "RadarNode mesh should not be empty");
+    ASSERT_TRUE(radarMesh.vertexCount() > 100, "RadarNode mesh too small");
+    ASSERT_TRUE(radarMesh.type == sim::vis::AssetType::RADAR_NODE, "RadarNode type mismatch");
+    ASSERT_TRUE(radarMesh.boundingRadius > 0.0f, "RadarNode bounding radius must be positive");
+
+    const auto& ccMesh = mgr.getMesh(sim::vis::AssetType::CONTROL_CENTER);
+    ASSERT_TRUE(!ccMesh.empty(), "ControlCenter mesh should not be empty");
+    ASSERT_TRUE(ccMesh.vertexCount() > 100, "ControlCenter mesh too small");
+    ASSERT_TRUE(ccMesh.type == sim::vis::AssetType::CONTROL_CENTER, "ControlCenter type mismatch");
+
+    const auto& lpMesh = mgr.getMesh(sim::vis::AssetType::LAUNCHER_PLATFORM);
+    ASSERT_TRUE(!lpMesh.empty(), "LauncherPlatform mesh should not be empty");
+    ASSERT_TRUE(lpMesh.vertexCount() > 100, "LauncherPlatform mesh too small");
+    ASSERT_TRUE(lpMesh.type == sim::vis::AssetType::LAUNCHER_PLATFORM, "LauncherPlatform type mismatch");
+
+    const auto& epMesh = mgr.getMesh(sim::vis::AssetType::EMITTER_POINT);
+    ASSERT_TRUE(!epMesh.empty(), "EmitterPoint mesh should not be empty");
+    ASSERT_TRUE(epMesh.type == sim::vis::AssetType::EMITTER_POINT, "EmitterPoint type mismatch");
+
+    const auto& projMesh = mgr.getMesh(sim::vis::AssetType::PROJECTILE);
+    ASSERT_TRUE(!projMesh.empty(), "Projectile mesh should not be empty");
+    ASSERT_TRUE(projMesh.type == sim::vis::AssetType::PROJECTILE, "Projectile type mismatch");
+
+    const auto& noneMesh = mgr.getMesh(sim::vis::AssetType::NONE);
+    ASSERT_TRUE(noneMesh.empty(), "NONE type should return empty mesh");
+
+    std::cout << "[+] PASS: test_asset_mesh_generation\n";
+    return true;
+}
+
+bool test_radar_node_mesh_vertices() {
+    std::cout << "[TEST] Running test_radar_node_mesh_vertices...\n";
+    auto mesh = sim::vis::RadarNodeMesh::generate(1.0f);
+
+    ASSERT_TRUE(!mesh.empty(), "RadarNode mesh should not be empty");
+    ASSERT_TRUE(mesh.type == sim::vis::AssetType::RADAR_NODE, "Type should be RADAR_NODE");
+    ASSERT_TRUE(mesh.boundingRadius > 50.0f, "Bounding radius too small");
+
+    for (const auto& v : mesh.vertices) {
+        float lenSq = v.nx * v.nx + v.ny * v.ny + v.nz * v.nz;
+        ASSERT_TRUE(lenSq > 0.5f && lenSq < 2.0f, "Normal vector not unit-length");
+    }
+
+    auto scaled = sim::vis::RadarNodeMesh::generate(2.0f);
+    ASSERT_TRUE(scaled.boundingRadius > mesh.boundingRadius, "Scaled mesh should have larger bounding radius");
+
+    std::cout << "[+] PASS: test_radar_node_mesh_vertices\n";
+    return true;
+}
+
+bool test_control_center_mesh_vertices() {
+    std::cout << "[TEST] Running test_control_center_mesh_vertices...\n";
+    auto mesh = sim::vis::ControlCenterMesh::generate(1.0f);
+
+    ASSERT_TRUE(!mesh.empty(), "ControlCenter mesh should not be empty");
+    ASSERT_TRUE(mesh.type == sim::vis::AssetType::CONTROL_CENTER, "Type should be CONTROL_CENTER");
+    ASSERT_TRUE(mesh.boundingRadius > 50.0f, "Bounding radius too small");
+
+    for (const auto& v : mesh.vertices) {
+        float lenSq = v.nx * v.nx + v.ny * v.ny + v.nz * v.nz;
+        ASSERT_TRUE(lenSq > 0.5f && lenSq < 2.0f, "Normal vector not unit-length");
+    }
+
+    std::cout << "[+] PASS: test_control_center_mesh_vertices\n";
+    return true;
+}
+
+bool test_launcher_platform_mesh_vertices() {
+    std::cout << "[TEST] Running test_launcher_platform_mesh_vertices...\n";
+    auto mesh = sim::vis::LauncherPlatformMesh::generate(1.0f);
+
+    ASSERT_TRUE(!mesh.empty(), "LauncherPlatform mesh should not be empty");
+    ASSERT_TRUE(mesh.type == sim::vis::AssetType::LAUNCHER_PLATFORM, "Type should be LAUNCHER_PLATFORM");
+    ASSERT_TRUE(mesh.boundingRadius > 50.0f, "Bounding radius too small");
+
+    for (const auto& v : mesh.vertices) {
+        float lenSq = v.nx * v.nx + v.ny * v.ny + v.nz * v.nz;
+        ASSERT_TRUE(lenSq > 0.5f && lenSq < 2.0f, "Normal vector not unit-length");
+    }
+
+    std::cout << "[+] PASS: test_launcher_platform_mesh_vertices\n";
+    return true;
+}
+
+bool test_asset_type_string_roundtrip() {
+    std::cout << "[TEST] Running test_asset_type_string_roundtrip...\n";
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::NONE)) == "NONE", "NONE toString");
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::RADAR_NODE)) == "RADAR_NODE", "RADAR_NODE toString");
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::CONTROL_CENTER)) == "CONTROL_CENTER", "CONTROL_CENTER toString");
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::LAUNCHER_PLATFORM)) == "LAUNCHER_PLATFORM", "LAUNCHER_PLATFORM toString");
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::EMITTER_POINT)) == "EMITTER_POINT", "EMITTER_POINT toString");
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::PROJECTILE)) == "PROJECTILE", "PROJECTILE toString");
+    ASSERT_TRUE(std::string(sim::vis::assetTypeToString(sim::vis::AssetType::ENVIRONMENT_GROUND)) == "ENVIRONMENT_GROUND", "ENVIRONMENT_GROUND toString");
+
+    std::cout << "[+] PASS: test_asset_type_string_roundtrip\n";
+    return true;
+}
+
+bool test_asset_vertex_struct() {
+    std::cout << "[TEST] Running test_asset_vertex_struct...\n";
+    sim::vis::AssetVertex v1;
+    ASSERT_TRUE(v1.px == 0.0f, "Default px should be 0");
+    ASSERT_TRUE(v1.r == 255, "Default r should be 255");
+
+    sim::vis::AssetVertex v2(1.0f, 2.0f, 3.0f, 0.0f, 1.0f, 0.0f, 100, 200, 50, 128);
+    ASSERT_TRUE(v2.px == 1.0f, "Constructor px mismatch");
+    ASSERT_TRUE(v2.py == 2.0f, "Constructor py mismatch");
+    ASSERT_TRUE(v2.pz == 3.0f, "Constructor pz mismatch");
+    ASSERT_TRUE(v2.nx == 0.0f, "Constructor nx mismatch");
+    ASSERT_TRUE(v2.ny == 1.0f, "Constructor ny mismatch");
+    ASSERT_TRUE(v2.nz == 0.0f, "Constructor nz mismatch");
+    ASSERT_TRUE(v2.r == 100, "Constructor r mismatch");
+    ASSERT_TRUE(v2.g == 200, "Constructor g mismatch");
+    ASSERT_TRUE(v2.b == 50, "Constructor b mismatch");
+    ASSERT_TRUE(v2.a == 128, "Constructor a mismatch");
+
+    sim::vis::AssetVertex v3(4.0f, 5.0f, 6.0f, 10, 20, 30);
+    ASSERT_TRUE(v3.px == 4.0f, "Position-only constructor px mismatch");
+    ASSERT_TRUE(v3.a == 255, "Position-only constructor default alpha should be 255");
+
+    std::cout << "[+] PASS: test_asset_vertex_struct\n";
+    return true;
+}
+
+bool test_asset_determinism_across_reloads() {
+    std::cout << "[TEST] Running test_asset_determinism_across_reloads...\n";
+    sim::vis::AssetManager mgr1;
+    mgr1.initialize();
+    const auto& mesh1 = mgr1.getMesh(sim::vis::AssetType::LAUNCHER_PLATFORM);
+
+    sim::vis::AssetManager mgr2;
+    mgr2.initialize();
+    const auto& mesh2 = mgr2.getMesh(sim::vis::AssetType::LAUNCHER_PLATFORM);
+
+    ASSERT_TRUE(mesh1.vertexCount() == mesh2.vertexCount(), "Vertex count mismatch between two AssetManager instances");
+    ASSERT_TRUE(mesh1.vertices.size() == mesh2.vertices.size(), "Vertices vector size mismatch");
+
+    for (size_t i = 0; i < mesh1.vertices.size(); ++i) {
+        ASSERT_APPROX_EQ(mesh1.vertices[i].px, mesh2.vertices[i].px, 1e-6, "Vertex px mismatch across instances");
+        ASSERT_APPROX_EQ(mesh1.vertices[i].py, mesh2.vertices[i].py, 1e-6, "Vertex py mismatch across instances");
+        ASSERT_APPROX_EQ(mesh1.vertices[i].pz, mesh2.vertices[i].pz, 1e-6, "Vertex pz mismatch across instances");
+    }
+
+    std::cout << "[+] PASS: test_asset_determinism_across_reloads\n";
+    return true;
+}
+
 int main() {
     std::cout << "==================================================\n";
     std::cout << " RUNNING UNIT & VISUALIZATION TESTS (MILESTONE S-001-VIS)\n";
@@ -732,6 +908,19 @@ int main() {
     std::cout << " DETERMINISM AUDIT\n";
     std::cout << "==================================================\n";
     runTest(test_determinism_across_quality_levels, "determinism_across_quality_levels");
+
+    // S-001-VIS-ASSETS Asset System Tests
+    std::cout << "\n==================================================\n";
+    std::cout << " S-001-VIS-ASSETS ASSET SYSTEM TESTS\n";
+    std::cout << "==================================================\n";
+    runTest(test_asset_manager_initialization, "asset_manager_initialization");
+    runTest(test_asset_mesh_generation, "asset_mesh_generation");
+    runTest(test_radar_node_mesh_vertices, "radar_node_mesh_vertices");
+    runTest(test_control_center_mesh_vertices, "control_center_mesh_vertices");
+    runTest(test_launcher_platform_mesh_vertices, "launcher_platform_mesh_vertices");
+    runTest(test_asset_type_string_roundtrip, "asset_type_string_roundtrip");
+    runTest(test_asset_vertex_struct, "asset_vertex_struct");
+    runTest(test_asset_determinism_across_reloads, "asset_determinism_across_reloads");
 
     std::cout << "==================================================\n";
     std::cout << "TOTAL SUMMARY: " << passed << " PASSED, " << failed << " FAILED\n";

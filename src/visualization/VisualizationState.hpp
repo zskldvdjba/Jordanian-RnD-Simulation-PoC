@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "core/Types.hpp"
+#include "VisualAssetTypes.hpp"
 #include <string>
 #include <vector>
 #include <deque>
@@ -19,6 +20,7 @@ struct TargetVisualState {
     double speed{0.0};
     double timestamp{0.0};
     TargetStatus status{TargetStatus::ACTIVE};
+    AssetType asset_type{AssetType::LAUNCHER_PLATFORM};
     std::deque<Vector3D> trail;
     size_t max_trail_points{40};
 

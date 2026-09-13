@@ -213,7 +213,7 @@ void Dashboard::render(const VisualizationAdapter& adapter, const PerformanceMon
     drawText(28.0f, 202.0f, "[Controls: Orbit=L-Drag, Pan=R-Drag, Zoom=Wheel]", 0.5f, 0.62f, 0.72f);
 
     // 2. MID-LEFT: System & Performance Telemetry Panel (PERFORMANCE-FIRST)
-    drawPanel(16.0f, 234.0f, 360.0f, 225.0f);
+    drawPanel(16.0f, 234.0f, 360.0f, 305.0f);
     drawText(28.0f, 254.0f, "HARDWARE & PERFORMANCE MONITOR", 0.3f, 1.0f, 0.7f);
 
     std::ostringstream fpsOss;
@@ -259,7 +259,18 @@ void Dashboard::render(const VisualizationAdapter& adapter, const PerformanceMon
 
     std::string qStr = std::string(qualityLevelToString(stats.quality_level)) + (stats.auto_quality_scaling ? " [AUTO]" : " [MANUAL]");
     drawText(28.0f, 434.0f, "Dynamic Visual Quality : " + qStr, 1.0f, 0.85f, 0.3f);
-    drawText(28.0f, 450.0f, "Thermal Behavior       : Stable + Cool + Responsive", 0.5f, 0.8f, 0.9f);
+
+    const auto& qci = stats.qualityChange;
+    drawText(28.0f, 454.0f, "Prev Quality / Changed : " + std::string(qualityLevelToString(qci.previousLevel))
+             + " -> " + std::string(qualityLevelToString(qci.currentLevel)), 0.8f, 0.9f, 0.95f);
+
+    std::ostringstream sinceOss;
+    sinceOss << std::fixed << std::setprecision(1) << qci.timeSinceChange << "s";
+    drawText(28.0f, 474.0f, "Time Since Change      : " + sinceOss.str(), 0.6f, 0.75f, 0.85f);
+
+    drawText(28.0f, 494.0f, "Quality Reason         : " + qci.reason, 0.75f, 0.78f, 0.82f);
+
+    drawText(28.0f, 514.0f, "GPU Telemetry          : " + stats.gpu_usage_str, 0.5f, 0.7f, 0.9f);
 
     // 3. TOP-RIGHT: Selected Target Panel
     const auto* selected = adapter.getSelectedTarget();
